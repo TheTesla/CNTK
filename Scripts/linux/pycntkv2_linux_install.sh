@@ -9,13 +9,14 @@
 # Log steps, stop on error
 set -x -e -o pipefail
 
-USAGE="Usage: $0 <url-of-cntk-python-wheel> [--force]"
-CNTK_PIP_URL=${1?$USAGE}
-FORCE=$(! [ "$2" = "--force" ]; echo $?)
+USAGE="Usage: $0 [--force]"
+FORCE=$(! [ "$1" = "--force" ]; echo $?)
 
 # Change to the script's directory
 SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
-cd "$SCRIPT_DIR"
+# TODO go to the drop root instead:
+cd "$SCRIPT_DIR/../.."
+# TODO sanity check that we run from a drop
 
 # Check for tested OS (note: only a warning, we can live with lsb-release not being available)
 [[ "$(lsb_release -i)" =~ :.*Ubuntu ]] && [[ "$(lsb_release -r)" =~ :.*(14\.04|16\.04) ]] || {
@@ -106,26 +107,10 @@ CNTK_PY34_ENV_PREFIX="$ANACONDA_PREFIX/envs/cntk-py34"
 if [ -d "$CNTK_PY34_ENV_PREFIX" ]; then
   printf "Path '%s' already exists, skipping CNTK Python 3.4 environment setup\n" "$CNTK_PY34_ENV_PREFIX"
 else
-  CNTK_PY34_ENV_FILE=conda-linux-cntk-py34-environment.yml
-
-  cat >| "$CNTK_PY34_ENV_FILE" <<CONDAENV
-name: cntk-py34
-dependencies:
-- matplotlib=1.5.3=np111py34_0
-- jupyter=1.0.0=py34_3
-- numpy=1.11.1=py34_0
-- python=3.4.4=5
-- scipy=0.18.1=np111py34_0
-- pip:
-  - pytest==3.0.2
-  - sphinx==1.4.6
-  - sphinx-rtd-theme==0.1.9
-  - twine==1.8.1
-CONDAENV
+  CNTK_PY34_ENV_FILE="$SCRIPT_DIR/conda-linux-cntk-py34-environment.yml"
 
   # (--force shouldn't be needed)
   "$CONDA" env create --quiet --force --file "$CNTK_PY34_ENV_FILE" --prefix "$CNTK_PY34_ENV_PREFIX"
-
 fi
 
 ###########################################
@@ -157,6 +142,7 @@ CNTK_WORKING_COPY="$HOME/repos/cntk"
 
 if [ -d "$CNTK_WORKING_COPY" ]; then
   printf "Path '%s' already exists, skipping CNTK clone\n" "$CNTK_WORKING_COPY"
+  # TODO message about checkout out specific tag?
 else
   mkdir -p "$HOME/repos"
   CNTK_GIT_CLONE_URL=https://github.com/Microsoft/CNTK.git
