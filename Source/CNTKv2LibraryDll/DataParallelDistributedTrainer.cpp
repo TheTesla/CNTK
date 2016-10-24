@@ -25,7 +25,7 @@ namespace CNTK
         return MakeSharedObject<DataParallelDistributedTrainer>(communicator, useAsyncBufferedParameterUpdate);
     }
 #else
-    DistributedCommunicatorPtr QuantizedMPICommunicator(bool, bool, size_t)
+    QuantizedDistributedCommunicatorPtr QuantizedMPICommunicator(bool, bool, size_t)
     {
         LogicError("Quantized MPI Communicator is not supported for this build.");
     }
