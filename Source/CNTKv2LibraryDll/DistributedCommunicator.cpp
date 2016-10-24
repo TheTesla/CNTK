@@ -132,18 +132,12 @@ namespace CNTK
     {
         if (outputValues.empty())
         {
-            for (const auto& inputValue : values)
-            {
-                const auto& outputView = MakeSharedObject<NDArrayView>(inputValue->GetDataType(), inputValue->Shape(), inputValue->Device());
-                outputValues.push_back(outputView);
-            }
+            Recreate(values, outputValues);
         }
         else if (outputValues.size() != values.size())
         {
             NOT_IMPLEMENTED;
         }
-
-        Recreate(values, outputValues);
 
         auto device = GetNonCPUDevice(values);
         if (device.Type() != DeviceKind::CPU)
