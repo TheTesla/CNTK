@@ -45,26 +45,6 @@ namespace CNTK
             std::vector<NDArrayViewPtr>& outValues,
             const std::unordered_set<DistributedWorkerDescriptor>& sendToWorkers) override;
 
-        virtual std::future<std::vector<NDArrayViewPtr>> AggregateAsync(const std::vector<NDArrayViewPtr>& inValues,
-                                                    const std::unordered_set<DistributedWorkerDescriptor>& sendToWorkers) override;
-
-        // A collective communication API to perform quantized aggregation of values across all workers of this communicator
-        // TODO: Add an async variant of the QuantizedAggregate method
-        void QuantizedAggregate(
-            const std::vector<NDArrayViewPtr>& inValues,
-            const std::vector<NDArrayViewPtr>& valueQuantizationResidues,
-            const std::vector<NDArrayViewPtr>& stripeQuantizationResidues,
-            std::vector<NDArrayViewPtr>& aggregatedOutputs,
-            std::vector<NDArrayViewPtr>& newQuantizationResidues,
-            std::vector<NDArrayViewPtr>& newStripeQuantizationResidues,
-            const std::unordered_set<DistributedWorkerDescriptor>& sendToWorkers) override;
-
-        void QuantizedAggregateInPlace(
-            std::vector<NDArrayViewPtr>& inValues,
-            std::vector<NDArrayViewPtr>& valueQuantizationResidues,
-            std::vector<NDArrayViewPtr>& stripeQuantizationResidues,
-            const std::unordered_set<DistributedWorkerDescriptor>& sendToWorkers) override;
-
         virtual ~MPICommunicatorImpl() {}
 
     private:

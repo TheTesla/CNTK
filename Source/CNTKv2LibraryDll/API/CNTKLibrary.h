@@ -3511,7 +3511,7 @@ namespace CNTK
     {
     public:
         CNTK_API virtual const std::unordered_set<DistributedWorkerDescriptor>& Workers() const = 0;
-        
+
         CNTK_API virtual const DistributedWorkerDescriptor& CurrentWorker() const = 0;
 
         // Creates a new distributed communicator comprising of a subset of the workers in this communicator
@@ -3535,12 +3535,17 @@ namespace CNTK
             std::vector<NDArrayViewPtr>& outputValues,
             const std::unordered_set<DistributedWorkerDescriptor>& sendToWorkers) = 0;
 
-        CNTK_API virtual std::future<std::vector<NDArrayViewPtr>> AggregateAsync(
-            const std::vector<NDArrayViewPtr>& values,
-            const std::unordered_set<DistributedWorkerDescriptor>& sendToWorkers) = 0;
+    protected:
+        DistributedCommunicator() {};
+    };
 
+    ///
+    /// A distributed communicator that supports quantized aggreagtion of values.
+    ///
+    class QuantizedDistributedCommunicator : public DistributedCommunicator
+    {
+    public:
         // A collective communication API to perform quantized aggregation of values across all workers of this communicator
-        // TODO: Add an async variant of the QuantizedAggregate method
         CNTK_API virtual void QuantizedAggregate(
             const std::vector<NDArrayViewPtr>& inValues,
             const std::vector<NDArrayViewPtr>& valueQuantizationResidues,
@@ -3557,7 +3562,7 @@ namespace CNTK
             const std::unordered_set<DistributedWorkerDescriptor>& sendToWorkers) = 0;
 
     protected:
-        DistributedCommunicator() {};
+        QuantizedDistributedCommunicator() {};
     };
 
     ///
@@ -3568,7 +3573,7 @@ namespace CNTK
     ///
     /// Distributed communicator that allows quantized aggregations.
     ///
-    CNTK_API DistributedCommunicatorPtr QuantizedMPICommunicator(bool zeroThresholdFor1Bit, bool useQuantizationForSelfStripe, size_t numQuantizationBits);
+    CNTK_API QuantizedDistributedCommunicatorPtr QuantizedMPICommunicator(bool zeroThresholdFor1Bit, bool useQuantizationForSelfStripe, size_t numQuantizationBits);
 
     /// A collection of additional information needed for the distributed trainer to aggregate the gradients
     struct MinibatchInfo

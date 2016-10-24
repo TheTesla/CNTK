@@ -163,38 +163,6 @@ namespace CNTK
         NOT_IMPLEMENTED;
     }
 
-    std::future<std::vector<NDArrayViewPtr>> MPICommunicatorImpl::AggregateAsync(
-        const std::vector<NDArrayViewPtr>& values,
-        const std::unordered_set<DistributedWorkerDescriptor>& sendToWorkers)
-    {
-        auto device = GetNonCPUDevice(values);
-
-        std::shared_ptr<MatrixComputeStreamEvent> mainStreamSyncEvent;
-        if (device.Type() != DeviceKind::CPU)
-            mainStreamSyncEvent.reset(MatrixComputeStreamEvent::Create(device.Id()));
-
-        return std::async(std::launch::async, [this, &values, &sendToWorkers, device, mainStreamSyncEvent]()
-        {
-            if (device.Type() != DeviceKind::CPU)
-            {
-                // We are starting on a new thread. Make sure the new thread is setup to use the right device
-                // TODO: SetDevice is type agnostic, move it to the base matrix class. 
-                Matrix<float>::SetDevice(device.Id());
-
-                // Since we will be copying the gradients asynchronously, let us
-                // ensure that the gradient matrices have been computed before starting to aggregate
-                // them asynchronously on another thread. This essentially means that when we are using
-                // a GPU device, we will synchronize on the main GPU compute stream before starting
-                // the gradient aggregation asynchronously on a separate stream
-                mainStreamSyncEvent->SynchronizeDataTransferFetchStreamWithEvent<float>();
-            }
-
-            std::vector<NDArrayViewPtr> output;
-            Aggregate(values, output, sendToWorkers);
-            return output;
-        });
-    }
-
     void MPICommunicatorImpl::AggregateInPlace(
         const std::vector<NDArrayViewPtr>& values,
         const std::unordered_set<DistributedWorkerDescriptor>& sendToWorkers)
@@ -317,36 +285,5 @@ namespace CNTK
             if (inputValues[i]->Device() != DeviceDescriptor::CPUDevice())
                 m_gpuDataTransferers[i]->WaitForCopyCPUToGPUAsync();
         }
-    }
-
-    void MPICommunicatorImpl::QuantizedAggregateInPlace(
-        std::vector<NDArrayViewPtr>& inValues,
-        std::vector<NDArrayViewPtr>& valueQuantizationResidues,
-        std::vector<NDArrayViewPtr>& stripeQuantizationResidues,
-        const std::unordered_set<DistributedWorkerDescriptor>& sendToWorkers)
-    {
-        if (m_mpi->NumNodesInUse() == 1) // No need to aggregate anything.
-            return;
-
-        QuantizedAggregate(
-            inValues,
-            valueQuantizationResidues,
-            stripeQuantizationResidues,
-            inValues,
-            valueQuantizationResidues,
-            stripeQuantizationResidues,
-            sendToWorkers);
-    }
-
-    void MPICommunicatorImpl::QuantizedAggregate(
-        const std::vector<NDArrayViewPtr>& /*inValues*/,
-        const std::vector<NDArrayViewPtr>& /*valueQuantizationResidues*/,
-        const std::vector<NDArrayViewPtr>& /*stripeQuantizationResidues*/,
-        std::vector<NDArrayViewPtr>& /*aggregatedOutputs*/,
-        std::vector<NDArrayViewPtr>& /*newQuantizationResidues*/,
-        std::vector<NDArrayViewPtr>& /*newStripeQuantizationResidues*/,
-        const std::unordered_set<DistributedWorkerDescriptor>& /*sendToWorkers*/)
-    {
-        NOT_IMPLEMENTED;
     }
 }
